@@ -4,10 +4,10 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
     "epc>=0.0.5",
-    "orjson>=3.10.18",
+    "orjson>=3.11.3",
     "packaging>=25.0",
-    "paramiko>=3.5.1",
-    "rapidfuzz>=3.13.0",
+    "paramiko>=4.0.0",
+    "rapidfuzz>=3.14.1",
     "setuptools>=80.9.0",
     "sexpdata>=1.0.2",
     "six>=1.17.0",
