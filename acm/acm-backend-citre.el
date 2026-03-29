@@ -207,10 +207,13 @@
           collection))))))
 
 (defun acm-backend-citre-candidate-expand (candidate-info bound-start &optional preview)
-  (if preview
-      (acm-preview-create-overlay bound-start (point) (plist-get candidate-info :label))
-    (delete-region bound-start (point))
-    (insert (plist-get candidate-info :label))))
+  (let* ((bounds (acm-candidate-default-replace-bounds bound-start))
+         (beg (car bounds))
+         (end (cdr bounds)))
+    (if preview
+        (acm-preview-create-overlay beg end (plist-get candidate-info :label))
+      (delete-region beg end)
+      (insert (plist-get candidate-info :label)))))
 
 (provide 'acm-backend-citre)
 

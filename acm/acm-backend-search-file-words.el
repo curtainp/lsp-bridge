@@ -125,10 +125,12 @@
      acm-backend-search-file-words-items)))
 
 (defun acm-backend-search-file-words-candidate-expand (candidate-info bound-start &optional preview)
-  (let ((beg (if (acm-is-elisp-mode-p)
-                 (car (bounds-of-thing-at-point 'symbol))
-               (- (point) (length (acm-get-input-prefix)))))
-        (end (point))
+  (let* ((bounds (if (acm-is-elisp-mode-p)
+                     (acm-candidate-default-replace-bounds bound-start)
+                   (cons (- (point) (length (acm-get-input-prefix)))
+                         (point))))
+        (beg (car bounds))
+        (end (cdr bounds))
         (cand (plist-get candidate-info :label)))
     (if preview
         (acm-preview-create-overlay beg end cand)

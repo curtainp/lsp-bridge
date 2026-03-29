@@ -198,6 +198,13 @@ class Completion(Handler):
 
                 insert_text = item.get('insertText', None)
                 text_edit = item.get("textEdit", None)
+                if text_edit is not None and "range" not in text_edit:
+                    replace_range = text_edit.get("replace", None) or text_edit.get("insert", None)
+                    if replace_range is not None:
+                        text_edit = {
+                            "newText": text_edit.get("newText", ""),
+                            "range": replace_range
+                        }
 
                 if kind == "snippet":
                     if text_edit is not None:

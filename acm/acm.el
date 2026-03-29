@@ -421,6 +421,21 @@ So we use `minor-mode-overriding-map-alist' to override key, make sure all keys 
         (buffer-substring-no-properties (car bound) (cdr bound))
       "")))
 
+(defun acm-candidate-default-replace-bounds (bound-start)
+  "Return replacement bounds for simple completions starting at BOUND-START.
+
+When point is inside an existing symbol, include the symbol suffix after
+point so completing from the middle of a symbol replaces the whole symbol
+instead of duplicating its tail."
+  (let ((bound-end (point)))
+    (when-let* ((symbol-bounds (bounds-of-thing-at-point 'symbol))
+                (symbol-start (car symbol-bounds))
+                (symbol-end (cdr symbol-bounds)))
+      (when (and (<= symbol-start bound-start)
+                 (<= bound-start symbol-end))
+        (setq bound-end (max bound-end symbol-end))))
+    (cons bound-start bound-end)))
+
 (defun acm-candidate-fuzzy-search (keyword candidate)
   "Fuzzy search candidate."
   (if acm-candidate-match-function
@@ -793,11 +808,12 @@ The key of candidate will change between two LSP results."
   (let* ((candidate-info (acm-menu-current-candidate))
          (bound-start acm-menu-frame-popup-point)
          (backend (plist-get candidate-info :backend))
-         (candidate-expand (intern-soft (format "acm-backend-%s-candidate-expand" backend))))
+         (candidate-expand (intern-soft (format "acm-backend-%s-candidate-expand" backend)))
+         (replace-bounds (acm-candidate-default-replace-bounds bound-start)))
 
     (if (fboundp candidate-expand)
         (funcall candidate-expand candidate-info bound-start)
-      (delete-region bound-start (point))
+      (delete-region (car replace-bounds) (cdr replace-bounds))
       (insert (plist-get candidate-info :label))))
 
   (when (overlayp acm-preview-overlay)
@@ -821,7 +837,7 @@ The key of candidate will change between two LSP results."
   (let* ((candidate-info (acm-menu-current-candidate))
          (beg acm-menu-frame-popup-point)
          (cand (plist-get candidate-info :label))
-         (end (+ beg (length cand)))
+         (end (cdr (acm-candidate-default-replace-bounds beg)))
          (backend (plist-get candidate-info :backend))
          (candidate-expand (intern-soft (format "acm-backend-%s-candidate-expand" backend))))
     (when acm-preview-overlay (delete-overlay acm-preview-overlay))

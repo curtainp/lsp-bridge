@@ -229,20 +229,24 @@ Below is available types:
          (snippet-fn (and (or (eql insert-text-format 2)
                               (string= (plist-get candidate-info :icon) "snippet"))
                           (acm-backend-lsp-snippet-expansion-fn)))
-         ;; Default, delete-bound is from menu popup postion to cursor postion.
-         (delete-start-pos bound-start)
-         (delete-end-pos (point)))
+         (replace-bounds (acm-candidate-default-replace-bounds bound-start))
+         ;; Default, delete-bound is current completion field.
+         (delete-start-pos (car replace-bounds))
+         (delete-end-pos (cdr replace-bounds)))
 
     ;; Try to adjust delete-bound if `text-edit' is not nil.
     (when text-edit
       ;; Use smaller one between `bound-start' and `range-start' used as the starting point of delete.
-      (setq delete-start-pos (min (acm-backend-lsp-position-to-point (plist-get (plist-get text-edit :range) :start)) bound-start))
+      (setq delete-start-pos
+            (min (acm-backend-lsp-position-to-point (plist-get (plist-get text-edit :range) :start))
+                 delete-start-pos))
 
       ;; Use bigger one between `point' and `range-end' used as the end point of delete.
       (let* ((range-end (acm-backend-lsp-position-to-point (plist-get (plist-get text-edit :range) :end)))
              (completion-start-pos (acm-backend-lsp-position-to-point acm-backend-lsp-completion-position)))
         (when (> range-end completion-start-pos)
-          (setq delete-end-pos (+ (point) (- range-end completion-start-pos))))))
+          (setq delete-end-pos (max delete-end-pos
+                                    (+ (point) (- range-end completion-start-pos)))))))
 
     ;; Move bound start position forward one character, if the following situation is satisfied:
     ;; 1. `textEdit' is not exist
