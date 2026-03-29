@@ -38,7 +38,7 @@
                             (string-blank-p (match-string 1))))
             start (match-beginning 2)
             end (match-end 2))
-      (delete-region bound-start (point))
+      (delete-region start end)
       (insert (if roam-p "" "roam:") (plist-get candidate-info :label))
       (forward-char 2))))
 

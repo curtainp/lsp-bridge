@@ -20,8 +20,11 @@
      acm-backend-tabnine-items)))
 
 (defun acm-backend-tabnine-candidate-expand (candidate-info bound-start &optional preview)
-  ;; Insert TabNine suggestion.
-  (delete-region bound-start (point))
+  (let* ((bounds (acm-candidate-default-replace-bounds bound-start))
+         (beg (car bounds))
+         (end (cdr bounds)))
+    ;; Insert TabNine suggestion.
+    (delete-region beg end))
   (insert (plist-get candidate-info :label))
 
   ;; Replace old suffix with new suffix for candidate to auto balance brackets.

@@ -192,3 +192,25 @@ class AcceptCompletion(unittest.TestCase):
 #             expected="member?.filter",
 #             cursor_offset=get_offset(files[0])
 #         )
+
+
+class BackendExpand(unittest.TestCase):
+    def test_path_replaces_full_filename_suffix(self):
+        file = SingleFile(
+            filename="test.py",
+            code='"foo.txt"',
+            mode="python-mode",
+        )
+
+        @with_file(file)
+        def go(filename: str):
+            result = eval_sexp_sync(file_buffer(filename, """
+                (setq-local major-mode 'python-mode)
+                (goto-char (point-min))
+                (search-forward "foo")
+                (acm-backend-path-candidate-expand '(:label "bar.el") 2)
+                (buffer-string)
+            """))
+            self.assertEqual('"bar.el"', result)
+
+        go()

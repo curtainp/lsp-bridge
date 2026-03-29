@@ -37,7 +37,10 @@
         (cl-subseq match-snippets 0 (min (length match-snippets) acm-backend-tempel-candidates-number)))))))
 
 (defun acm-backend-tempel-candidate-expand (candidate-info bound-start)
-  (delete-region bound-start (point))
+  (let* ((bounds (acm-candidate-default-replace-bounds bound-start))
+         (beg (car bounds))
+         (end (cdr bounds)))
+    (delete-region beg end))
   (tempel-insert (intern-soft (plist-get candidate-info :label))))
 
 (defun acm-backend-tempel-candidate-doc (candidate)

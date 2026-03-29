@@ -210,7 +210,10 @@ Default matching use snippet filename."
        (cl-subseq match-templates 0 limit)))))
 
 (defun acm-backend-yas-candidate-expand (candidate bound-start)
-  (delete-region bound-start (point))
+  (let* ((bounds (acm-candidate-default-replace-bounds bound-start))
+         (beg (car bounds))
+         (end (cdr bounds)))
+    (delete-region beg end))
   (yas-expand-snippet (plist-get candidate :content)))
 
 (defun acm-backend-yas-candidate-doc (candidate)

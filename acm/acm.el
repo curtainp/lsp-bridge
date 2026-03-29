@@ -421,20 +421,49 @@ So we use `minor-mode-overriding-map-alist' to override key, make sure all keys 
         (buffer-substring-no-properties (car bound) (cdr bound))
       "")))
 
-(defun acm-candidate-default-replace-bounds (bound-start)
+(defun acm-candidate-default-replace-bounds (bound-start &optional thing)
   "Return replacement bounds for simple completions starting at BOUND-START.
 
-When point is inside an existing symbol, include the symbol suffix after
-point so completing from the middle of a symbol replaces the whole symbol
-instead of duplicating its tail."
-  (let ((bound-end (point)))
-    (when-let* ((symbol-bounds (bounds-of-thing-at-point 'symbol))
-                (symbol-start (car symbol-bounds))
-                (symbol-end (cdr symbol-bounds)))
-      (when (and (<= symbol-start bound-start)
-                 (<= bound-start symbol-end))
-        (setq bound-end (max bound-end symbol-end))))
+THING defaults to `symbol'.  When point is inside an existing THING,
+include the suffix after point so completing from the middle replaces the
+whole thing instead of duplicating its tail."
+  (let ((bound-end (point))
+        (thing (or thing 'symbol)))
+    (when-let* ((thing-bounds (bounds-of-thing-at-point thing))
+                (thing-start (car thing-bounds))
+                (thing-end (cdr thing-bounds)))
+      (when (and (<= thing-start bound-start)
+                 (<= bound-start thing-end))
+        (setq bound-end (max bound-end thing-end))))
     (cons bound-start bound-end)))
+
+(defun acm-candidate-path-replace-bounds (bound-start)
+  "Return replacement bounds for path completions starting at BOUND-START.
+
+Replace only the current path segment so completing in the middle of a
+directory name does not drop later path components."
+  (let ((current-point (point)))
+    (if-let* ((thing-bounds (bounds-of-thing-at-point 'filename))
+              (thing-start (car thing-bounds))
+              (thing-end (cdr thing-bounds))
+              ((and (<= thing-start bound-start)
+                    (<= bound-start thing-end))))
+        (let (segment-start segment-end)
+          (save-excursion
+            (goto-char current-point)
+            (while (and (> (point) bound-start)
+                        (not (memq (char-before) '(?/ ?\\))))
+              (backward-char 1))
+            (setq segment-start (point))
+
+            (goto-char current-point)
+            (while (and (< (point) thing-end)
+                        (not (memq (char-after) '(?/ ?\\))))
+              (forward-char 1))
+            (setq segment-end (point)))
+          (cons segment-start segment-end))
+      (acm-candidate-default-replace-bounds bound-start 'filename))))
+
 
 (defun acm-candidate-fuzzy-search (keyword candidate)
   "Fuzzy search candidate."

@@ -102,19 +102,21 @@
      acm-backend-path-items)))
 
 (defun acm-backend-path-candidate-expand (candidate-info bound-start &optional preview)
-  (let* ((keyword (acm-get-input-prefix))
-         (file-name (plist-get candidate-info :label))
-         (parent-dir (file-name-directory keyword)))
+  (let* ((bounds (acm-candidate-path-replace-bounds bound-start))
+         (beg (car bounds))
+         (end (cdr bounds))
+         (file-name (plist-get candidate-info :label)))
 
     ;; Avoid insert duplicate `.' for file that have LSP server, such as python, golang, rust etc.
-    (when (and (string-equal (char-to-string (char-before bound-start)) ".")
-               (string-equal (substring file-name 0 1) "."))
-      (setq bound-start (1- bound-start)))
+    (when (and (> beg (point-min))
+               (string-equal (char-to-string (char-before beg)) ".")
+               (string-prefix-p "." file-name))
+      (setq beg (1- beg)))
 
     (if preview
-        (acm-preview-create-overlay bound-start (point) (concat parent-dir file-name))
-      (delete-region bound-start (point))
-      (insert (concat parent-dir file-name)))))
+        (acm-preview-create-overlay beg end file-name)
+      (delete-region beg end)
+      (insert file-name))))
 
 (defun acm-backend-path-clean ()
   (setq-local acm-backend-path-items nil)
